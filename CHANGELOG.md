@@ -1,3 +1,10 @@
+### [0.1.1](https://github.com/buschtoens/loader.ts/compare/v0.1.0...v0.1.1) (2021-12-02)
+
+
+### Bug Fixes
+
+* remove `declare module` for magic modules ([00b482f](https://github.com/buschtoens/loader.ts/commit/00b482fd8b042005b133078213faf7939388d745))
+
 ## 0.1.0 (2021-12-02)
 
 
