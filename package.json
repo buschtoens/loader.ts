@@ -1,0 +1,85 @@
+{
+  "name": "loader.ts",
+  "version": "0.0.0",
+  "description": "Type definitions and helpers for `loader.js`.",
+  "keywords": [
+    "ember-addon",
+    "ember-cli",
+    "loader",
+    "loader.js",
+    "ts",
+    "typescript",
+    "types",
+    "require",
+    "requirejs",
+    "module",
+    "requireModule"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:buschtoens/loader.ts.git"
+  },
+  "license": "MIT",
+  "author": "Jan Buschtöns <jan@buschtoens.me> (https://jan.buschtoens.me)",
+  "type": "module",
+  "files": [
+    "**/*.d.ts",
+    "**/*.d.ts.map",
+    "**/*.js",
+    "**/*.js.map"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "build:clean": "tsc --build --clean",
+    "prepack": "pnpm run build",
+    "postpack": "pnpm run build:clean",
+    "lint:eslint": "eslint .",
+    "lint:types": "tsc --noEmit"
+  },
+  "resolutions": {
+    "prettier": "2.5.0"
+  },
+  "dependencies": {
+    "type-fest": "^2.8.0"
+  },
+  "peerDependencies": {
+    "loader.js": "^4.7.0"
+  },
+  "devDependencies": {
+    "@clark/eslint-config ": "^2.2.0",
+    "@clark/eslint-config-node": "^2.2.0",
+    "@clark/eslint-config-typescript": "^2.2.0",
+    "@clark/prettier-config": "^2.2.0",
+    "@typescript-eslint/eslint-plugin": "^5.5.0",
+    "@typescript-eslint/parser": "^5.5.0",
+    "eslint": "^8.3.0",
+    "loader.js": "^4.7.0",
+    "prettier": "^2.5.0",
+    "typescript": "~4.5.2"
+  },
+  "engines": {
+    "node": ">= 12.*"
+  },
+  "prettier": "@clark/prettier-config",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "release-it": {
+    "plugins": {
+      "release-it-lerna-changelog": {
+        "infile": "CHANGELOG.md",
+        "launchEditor": false
+      }
+    },
+    "git": {
+      "tagName": "v${version}"
+    },
+    "github": {
+      "release": true,
+      "tokenRef": "GITHUB_AUTH"
+    },
+    "npm": {
+      "publish": false
+    }
+  }
+}
