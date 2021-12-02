@@ -1,4 +1,4 @@
-import type { LocalRequire } from '../types';
+import type { LocalRequire, Exports } from '../types';
 
 export namespace MagicModules {
   /**
@@ -14,10 +14,10 @@ export namespace MagicModules {
    */
   export type require<
     Id extends string,
-    Exports extends unknown
-  > = LocalRequire<Id, Exports>;
+    TExports extends Exports
+  > = LocalRequire<Id, TExports>;
 
-  export const require: require<string, unknown>;
+  export const require: require<string, exports>;
 
   /**
    * You can set properties on this object for them to be exported, but you
@@ -27,12 +27,7 @@ export namespace MagicModules {
    * @see Module#module
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L190-L193
    */
-  export interface exports {
-    /**
-     * The `default` export of the module.
-     */
-    default?: unknown;
-  }
+  export type exports = Exports;
 
   export const exports: exports;
 
@@ -57,8 +52,8 @@ export namespace MagicModules {
   export const module: module;
 }
 
-export interface MagicModules<Id extends string, Exports extends unknown> {
-  require: MagicModules.require<Id, Exports>;
+export interface MagicModules<Id extends string, TExports extends Exports> {
+  require: MagicModules.require<Id, TExports>;
   exports: MagicModules.exports;
   modules: MagicModules.module;
 }

@@ -172,12 +172,12 @@ export interface Loader {
    */
   wrapModules?<
     Id extends string,
-    Exports extends unknown = {},
+    TExports extends Exports = {},
     Deps extends string[] = DefaultDeps
   >(
     name: Id,
-    callback: ModuleCallback<Exports, Deps, Id>
-  ): ModuleCallback<Exports, Deps, Id>;
+    callback: ModuleCallback<TExports, Deps, Id>
+  ): ModuleCallback<TExports, Deps, Id>;
 }
 
 /**
@@ -229,12 +229,16 @@ export interface InternalHelpers {
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L284-L300
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L49-L54
    */
-  findModule<Id extends string, Exports extends unknown, Deps extends string[]>(
+  findModule<
+    Id extends string,
+    TExports extends Exports,
+    Deps extends string[]
+  >(
     id: Id,
     referrer: string,
     // `false` is used internally instead of `undefined` for some reason. ¯\_(ツ)_/¯
     pending?: Module<string>[] | false
-  ): Module<Id, Exports, Deps>;
+  ): Module<Id, TExports, Deps>;
 }
 
 /**
@@ -274,7 +278,7 @@ export type ModuleState =
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L130-L136
  */
 export type ModuleCallback<
-  Exports extends unknown,
+  TExports extends Exports,
   Deps extends string[],
   // Intentionally breaking the standard order of `<Id, Exports, Deps>` here, as
   // `Id` only plays a very minor role in this type definition, but cannot be
@@ -283,13 +287,25 @@ export type ModuleCallback<
   // https://github.com/microsoft/TypeScript/pull/26349
   Id extends string = string
 > = (
-  this: Module<Id, Exports, Deps>,
+  this: Module<Id, TExports, Deps>,
   ...deps: {
-    [K in keyof Deps]: Deps[K] extends keyof MagicModules<Id, Exports>
-      ? MagicModules<Id, Exports>[Deps[K]]
+    [K in keyof Deps]: Deps[K] extends keyof MagicModules<Id, TExports>
+      ? MagicModules<Id, TExports>[Deps[K]]
       : unknown;
   }
-) => Exports;
+) => TExports;
+
+/**
+ * You can set properties on this object for them to be exported, but you
+ * can't replace the object itself. Use `module` for this.
+ *
+ * @see MagicModules#module
+ * @see Module#module
+ * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L190-L193
+ */
+export interface Exports {
+  default?: unknown;
+}
 
 /**
  * An entry of the `Require#entries` module registry.
@@ -304,7 +320,7 @@ export type ModuleCallback<
  */
 export interface Module<
   Id extends string = string,
-  Exports extends unknown = {},
+  TExports extends Exports = {},
   Deps extends string[] = DefaultDeps,
   IsAlias extends boolean = false
 > {
@@ -339,7 +355,7 @@ export interface Module<
    *
    * @see Module#exports
    */
-  readonly module: { exports: Exports };
+  readonly module: { exports: TExports };
 
   /**
    * The `callback` passed to `define(id, deps, callback)`. Called with the
@@ -356,7 +372,7 @@ export interface Module<
    */
   readonly callback: IsAlias extends true
     ? Alias<Id>
-    : ModuleCallback<Exports, Deps, Id>;
+    : ModuleCallback<TExports, Deps, Id>;
 
   /**
    * Whether the magic `'exports'` dependency is included in `this.deps`.
@@ -415,7 +431,7 @@ export interface Module<
          * @see MagicDependencies
          * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L190-L197
          */
-        { exports: ValueOf<MagicModules<Id, Exports>>; module: undefined }
+        { exports: ValueOf<MagicModules<Id, TExports>>; module: undefined }
 
         /**
          * If the `exports` are not known at this stage, the `Module` is passed
@@ -474,7 +490,7 @@ export interface Module<
    * @internal
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L124-L147
    */
-  exports(): Exports;
+  exports(): TExports;
 
   /**
    * Allows you to unload a given module. This is quite useful, especially for
@@ -530,7 +546,7 @@ export interface Module<
    * @see LocalRequire
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L203-L214
    */
-  makeRequire(): LocalRequire<Id, Exports>;
+  makeRequire(): LocalRequire<Id, TExports>;
 }
 
 /**
@@ -632,14 +648,14 @@ export interface Define {
    *
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L216-L243
    */
-  <Id extends string, Exports extends unknown, Deps extends string[]>(
+  <Id extends string, TExports extends Exports, Deps extends string[]>(
     id: Id,
     deps: Deps,
-    callback: ModuleCallback<Exports, Deps, Id>
+    callback: ModuleCallback<TExports, Deps, Id>
   ): void;
-  <Id extends string, Exports extends unknown, Deps extends DefaultDeps>(
+  <Id extends string, TExports extends Exports, Deps extends DefaultDeps>(
     id: Id,
-    callback: ModuleCallback<Exports, Deps, Id>
+    callback: ModuleCallback<TExports, Deps, Id>
   ): void;
   <Id extends string>(id: Id, alias: Alias<string>): void;
   // ! When using `alias`, potentially passed `deps` are ignored.
@@ -745,7 +761,7 @@ export interface Define {
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L331
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L79
  */
-export type ModuleEntries = Record<string, Module<string, unknown, string[]>>;
+export type ModuleEntries = Record<string, Module<string, Exports, string[]>>;
 
 /**
  * Allows you to dynamically require a module as well as interrogate and
@@ -832,7 +848,7 @@ export interface Require extends Pick<InternalHelpers, 'has'> {
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L193-L195
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L203-L214
  */
-export interface LocalRequire<Id extends string, Exports extends unknown>
+export interface LocalRequire<Id extends string, TExports extends Exports>
   extends Pick<InternalHelpers, 'has'> {
   /**
    * You can list `require` as a dependency of your modules.
@@ -892,7 +908,7 @@ export interface LocalRequire<Id extends string, Exports extends unknown>
    * @see https://github.com/ember-cli/loader.js#requirerequire
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L205-L207
    */
-  (dep: string): Exports;
+  (dep: string): TExports;
 
   /**
    * A reference to the `require` itself for AMD module compatibility, as they
@@ -901,7 +917,7 @@ export interface LocalRequire<Id extends string, Exports extends unknown>
    *
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L208
    */
-  readonly default: LocalRequire<Id, Exports>;
+  readonly default: LocalRequire<Id, TExports>;
 
   /**
    * The ID of the module that listed this local `require` as a dependency.
