@@ -57,17 +57,3 @@ export interface MagicModules<Id extends string, TExports extends Exports> {
   exports: MagicModules.exports;
   modules: MagicModules.module;
 }
-
-declare module 'require' {
-  export = MagicModules.require;
-}
-
-declare module 'exports' {
-  export = MagicModules.exports;
-}
-
-// ! This (incorrectly?) causes type error TS2666:
-// Exports and export assignments are not permitted in module augmentations.
-// declare module 'module' {
-//   export = MagicModules.module;
-// }
