@@ -47,8 +47,8 @@
   },
   "devDependencies": {
     "@clark/eslint-config ": "^2.2.0",
-    "@clark/eslint-config-node": "^2.2.0",
-    "@clark/eslint-config-typescript": "^2.2.0",
+    "@clark/eslint-config-node": "2.2.0",
+    "@clark/eslint-config-typescript": "2.2.0",
     "@clark/prettier-config": "^2.2.0",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
