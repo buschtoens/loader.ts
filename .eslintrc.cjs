@@ -1,14 +1,28 @@
 module.exports = {
   root: true,
-  extends: '@clark',
+  parser: '@typescript-eslint/parser',
+  plugins: [
+    '@typescript-eslint',
+  ],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'prettier'
+  ],
   overrides: [
     {
       files: '.eslintrc.cjs',
-      extends: '@clark/node'
+      "env": {
+        "browser": false,
+        "node": true
+      }
     },
     {
       files: '*.ts',
-      extends: '@clark/typescript'
+      "env": {
+        "browser": true,
+        "node": false
+      }
     }
   ]
 };
