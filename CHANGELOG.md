@@ -1,3 +1,10 @@
+### [0.1.2](https://github.com/buschtoens/loader.ts/compare/v0.1.1...v0.1.2) (2021-12-03)
+
+
+### Bug Fixes
+
+* **pkg:** remove `ember-addon` keyword ([aab56d3](https://github.com/buschtoens/loader.ts/commit/aab56d3f55e1d58eaa2c5b8e923b89560683f285))
+
 ### [0.1.1](https://github.com/buschtoens/loader.ts/compare/v0.1.0...v0.1.1) (2021-12-02)
 
 
