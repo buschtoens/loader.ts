@@ -129,7 +129,9 @@ export interface Loader {
    * @see https://github.com/ember-cli/loader.js#no-conflict
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L61-L74
    */
-  noConflict(aliases: Record<keyof Globals, string | undefined>): void;
+  noConflict(
+    aliases: Partial<Record<keyof DeprecatedGlobals, string | undefined>>
+  ): void;
 
   /**
    * Option to enable or disable the generation of `default` exports for strict
@@ -710,7 +712,7 @@ export interface Define {
    * require('some/other/name') // => 0.123456789;
    *
    * // Identity is the same.
-   * require('random') === require('some/other/name);
+   * require('random') === require('some/other/name');
    * ```
    *
    * @example Single module name: An `Alias` is returned that can be passed to
