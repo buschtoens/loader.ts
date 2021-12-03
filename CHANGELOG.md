@@ -1,3 +1,15 @@
+## [0.2.0](https://github.com/buschtoens/loader.ts/compare/v0.1.2...v0.2.0) (2021-12-03)
+
+
+### Features
+
+* add `Registry` ([e645289](https://github.com/buschtoens/loader.ts/commit/e645289e0d5722b95b6e0a63c796260dce8b14ef))
+
+
+### Bug Fixes
+
+* `loader.noConflict(aliases)` types ([2c0faf3](https://github.com/buschtoens/loader.ts/commit/2c0faf3b66e6d13a4db617b3eb76820042b4e36f))
+
 ### [0.1.2](https://github.com/buschtoens/loader.ts/compare/v0.1.1...v0.1.2) (2021-12-03)
 
 
