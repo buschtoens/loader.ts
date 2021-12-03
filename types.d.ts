@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types, @typescript-eslint/naming-convention */
 import type { Merge, ValueOf } from 'type-fest';
 import type { MagicModules } from './magic-modules';
+import type { Registry, RegistryShape } from './registry';
 
 /**
  * The standard global names `loader.js` exposes itself as.
@@ -175,7 +176,7 @@ export interface Loader {
   wrapModules?<
     Id extends string,
     TExports extends Exports = {},
-    Deps extends string[] = DefaultDeps
+    Deps extends readonly string[] = DefaultDeps
   >(
     name: Id,
     callback: ModuleCallback<TExports, Deps, Id>
@@ -281,19 +282,26 @@ export type ModuleState =
  */
 export type ModuleCallback<
   TExports extends Exports,
-  Deps extends string[],
+  Deps extends readonly (
+    | (keyof TRegistry & string)
+    | (keyof MagicModules & string)
+    | (string & {})
+  )[],
   // Intentionally breaking the standard order of `<Id, Exports, Deps>` here, as
   // `Id` only plays a very minor role in this type definition, but cannot be
   // inferred automatically. As TypeScript supports no partial type argument
   // inference, we place it last and provide a default type.
   // https://github.com/microsoft/TypeScript/pull/26349
-  Id extends string = string
+  Id extends (keyof TRegistry & string) | (string & {}),
+  TRegistry extends RegistryShape = Registry
 > = (
-  this: Module<Id, TExports, Deps>,
+  this: Module<Id, TExports, Deps, false, TRegistry>,
   ...deps: {
-    [K in keyof Deps]: Deps[K] extends keyof MagicModules<Id, TExports>
-      ? MagicModules<Id, TExports>[Deps[K]]
-      : unknown;
+    [DepId in keyof Deps]: Deps[DepId] extends keyof MagicModules & string
+      ? MagicModules[Deps[DepId]]
+      : Deps[DepId] extends keyof TRegistry & string
+      ? TRegistry[Deps[DepId]]
+      : undefined;
   }
 ) => TExports;
 
@@ -322,9 +330,10 @@ export interface Exports {
  */
 export interface Module<
   Id extends string = string,
-  TExports extends Exports = {},
-  Deps extends string[] = DefaultDeps,
-  IsAlias extends boolean = false
+  TExports extends Exports = Exports,
+  Deps extends readonly string[] = DefaultDeps,
+  IsAlias extends boolean = false,
+  TRegistry extends RegistryShape = Registry
 > {
   /**
    * Unique identifier of this `Module`.
@@ -374,7 +383,7 @@ export interface Module<
    */
   readonly callback: IsAlias extends true
     ? Alias<Id>
-    : ModuleCallback<TExports, Deps, Id>;
+    : ModuleCallback<TExports, Deps, Id, TRegistry>;
 
   /**
    * Whether the magic `'exports'` dependency is included in `this.deps`.
@@ -433,7 +442,7 @@ export interface Module<
          * @see MagicDependencies
          * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L190-L197
          */
-        { exports: ValueOf<MagicModules<Id, TExports>>; module: undefined }
+        { exports: ValueOf<MagicModules<Id, TRegistry>>; module: undefined }
 
         /**
          * If the `exports` are not known at this stage, the `Module` is passed
@@ -548,7 +557,10 @@ export interface Module<
    * @see LocalRequire
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L203-L214
    */
-  makeRequire(): LocalRequire<Id, TExports>;
+  makeRequire<TRegistry extends RegistryShape = Registry>(): LocalRequire<
+    Id,
+    TRegistry
+  >;
 }
 
 /**
@@ -589,11 +601,11 @@ export interface Alias<Id extends string> {
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L89
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L95
  */
-export type DefaultDeps =
-  | []
-  | [require: 'require']
-  | [require: 'require', exports: 'exports']
-  | [require: 'require', exports: 'exports', module: 'module'];
+export type DefaultDeps = readonly [
+  require: 'require',
+  exports: 'exports',
+  module: 'module'
+];
 
 /**
  * Used to register new modules.
@@ -601,7 +613,7 @@ export type DefaultDeps =
  *
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L216-L262
  */
-export interface Define {
+export interface Define<TRegistry extends RegistryShape = Registry> {
   /**
    * Defines a new `Module`, so that it may be reified later, when resolved.
    *
@@ -650,18 +662,56 @@ export interface Define {
    *
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L216-L243
    */
-  <Id extends string, TExports extends Exports, Deps extends string[]>(
+  <
+    Id extends keyof TRegistry & string,
+    TExports extends TRegistry[Id] & Exports,
+    Deps extends readonly (
+      | (keyof TRegistry & string)
+      | (keyof MagicModules & string)
+      | (string & {})
+    )[]
+  >(
     id: Id,
     deps: Deps,
-    callback: ModuleCallback<TExports, Deps, Id>
+    callback: ModuleCallback<TExports, Deps, Id, TRegistry>
   ): void;
-  <Id extends string, TExports extends Exports, Deps extends DefaultDeps>(
+  <
+    Id extends (keyof TRegistry & string) | (string & {}),
+    TExports extends Exports,
+    Deps extends readonly (
+      | (keyof TRegistry & string)
+      | (keyof MagicModules & string)
+      | (string & {})
+    )[]
+  >(
     id: Id,
-    callback: ModuleCallback<TExports, Deps, Id>
+    deps: Deps,
+    callback: ModuleCallback<TExports, Deps, Id, TRegistry>
   ): void;
-  <Id extends string>(id: Id, alias: Alias<string>): void;
+  <
+    Id extends keyof TRegistry & string,
+    TExports extends TRegistry[Id] & Exports
+  >(
+    id: Id,
+    callback: ModuleCallback<TExports, DefaultDeps, Id, TRegistry>
+  ): void;
+  <
+    Id extends (keyof TRegistry & string) | (string & {}),
+    TExports extends Exports
+  >(
+    id: Id,
+    callback: ModuleCallback<TExports, DefaultDeps, Id, TRegistry>
+  ): void;
+  <Id extends (keyof TRegistry & string) | (string & {})>(
+    id: Id,
+    alias: Alias<(keyof TRegistry & string) | (string & {})>
+  ): void;
   // ! When using `alias`, potentially passed `deps` are ignored.
-  <Id extends string>(id: Id, deps: string[], alias: Alias<string>): void;
+  <Id extends (keyof TRegistry & string) | (string & {})>(
+    id: Id,
+    deps: string[],
+    alias: Alias<(keyof TRegistry & string) | (string & {})>
+  ): void;
 
   /**
    * Enables a fast-path for non-lazy dependency-less modules.
@@ -682,7 +732,7 @@ export interface Define {
    * @see https://github.com/ember-cli/loader.js#defineexportsfoo-
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L245-L262
    */
-  exports<Id extends string, DefaultExport extends {}>(
+  exports<Id extends (keyof TRegistry & string) | (string & {}), DefaultExport>(
     name: Id,
     defaultExport: DefaultExport
   ): Merge<
@@ -735,9 +785,17 @@ export interface Define {
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L272-L278
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L288-L290
    */
-  alias<Id extends string>(id: Id): Alias<Id>;
-  alias<Id extends string>(id: Id, from: string): void;
-  alias<Id extends string>(id: Id, from?: string): Alias<Id> | void;
+  alias<Id extends (keyof TRegistry & string) | (string & {})>(
+    id: Id
+  ): Alias<Id>;
+  alias<Id extends (keyof TRegistry & string) | (string & {})>(
+    id: Id,
+    from: string
+  ): void;
+  alias<Id extends (keyof TRegistry & string) | (string & {})>(
+    id: Id,
+    from?: string
+  ): Alias<Id> | void;
 }
 
 /**
@@ -763,7 +821,9 @@ export interface Define {
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L331
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L79
  */
-export type ModuleEntries = Record<string, Module<string, Exports, string[]>>;
+export type ModuleEntries<TRegistry extends RegistryShape = Registry> = {
+  [TModuleId in keyof TRegistry & string]: Module<TModuleId, Exports, string[]>;
+};
 
 /**
  * Allows you to dynamically require a module as well as interrogate and
@@ -773,7 +833,8 @@ export type ModuleEntries = Record<string, Module<string, Exports, string[]>>;
  *
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L46-L58
  */
-export interface Require extends Pick<InternalHelpers, 'has'> {
+export interface Require<TRegistry extends RegistryShape = Registry>
+  extends Pick<InternalHelpers, 'has'> {
   /**
    * Returns the exports from the `Module` identified by `id`.
    *
@@ -781,7 +842,10 @@ export interface Require extends Pick<InternalHelpers, 'has'> {
    *
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L46-L58
    */
-  (id: string): unknown;
+  <TDepId extends keyof MagicModules & string>(dep: TDepId): never;
+  <TDepId extends keyof TRegistry & string>(dep: TDepId): Registry[TDepId];
+  <TExports extends Exports>(dep: string): TExports;
+  (dep: string): never;
 
   /**
    * @deprecated Use `entries` instead.
@@ -813,14 +877,15 @@ export interface Require extends Pick<InternalHelpers, 'has'> {
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L331
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L79
    */
-  readonly entries: Readonly<ModuleEntries>;
+  readonly entries: Readonly<ModuleEntries<TRegistry>>;
 
   /**
    * @inheritDoc
    * @see InternalHelpers#has
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L332
    */
-  has(dep: string): boolean;
+  has(dep: keyof MagicModules & string): false;
+  has(dep: keyof TRegistry | (string & {})): boolean;
 
   /**
    * Shorthand method for removing a module from the registry and pretending it
@@ -829,7 +894,7 @@ export interface Require extends Pick<InternalHelpers, 'has'> {
    * @see Module#unsee
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L333-L335
    */
-  unsee(id: string): void;
+  unsee(id: keyof TRegistry | (string & {})): void;
 
   /**
    * Clears the complete registry.
@@ -850,8 +915,10 @@ export interface Require extends Pick<InternalHelpers, 'has'> {
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L193-L195
  * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L203-L214
  */
-export interface LocalRequire<Id extends string, TExports extends Exports>
-  extends Pick<InternalHelpers, 'has'> {
+export interface LocalRequire<
+  TOwnId extends string,
+  TRegistry extends RegistryShape = Registry
+> extends Pick<InternalHelpers, 'has'> {
   /**
    * You can list `require` as a dependency of your modules.
    * This provides a `require` scoped to the current module, enabling dynamic,
@@ -910,7 +977,10 @@ export interface LocalRequire<Id extends string, TExports extends Exports>
    * @see https://github.com/ember-cli/loader.js#requirerequire
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L205-L207
    */
-  (dep: string): TExports;
+  <TDepId extends keyof MagicModules & string>(dep: TDepId): never;
+  <TDepId extends keyof TRegistry & string>(dep: TDepId): Registry[TDepId];
+  <TExports extends Exports>(dep: string): TExports;
+  (dep: string): never;
 
   /**
    * A reference to the `require` itself for AMD module compatibility, as they
@@ -919,7 +989,7 @@ export interface LocalRequire<Id extends string, TExports extends Exports>
    *
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L208
    */
-  readonly default: LocalRequire<Id, TExports>;
+  readonly default: this;
 
   /**
    * The ID of the module that listed this local `require` as a dependency.
@@ -933,7 +1003,7 @@ export interface LocalRequire<Id extends string, TExports extends Exports>
    *
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L209
    */
-  readonly moduleId: Id;
+  readonly moduleId: TOwnId;
 
   /**
    * @inheritDoc
@@ -941,5 +1011,6 @@ export interface LocalRequire<Id extends string, TExports extends Exports>
    * @see https://github.com/ember-cli/loader.js#requirerequire
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L210-L212
    */
-  has(dep: string): boolean;
+  has(dep: keyof MagicModules & string): false;
+  has(dep: keyof TRegistry | (string & {})): boolean;
 }

@@ -1,3 +1,4 @@
+import type { Registry, RegistryShape } from '../registry';
 import type { LocalRequire, Exports } from '../types';
 
 export namespace MagicModules {
@@ -13,12 +14,11 @@ export namespace MagicModules {
    * @see https://github.com/ember-cli/loader.js/blob/v4.7.0/lib/loader/loader.js#L203-L214
    */
   export type require<
-    Id extends string,
-    TExports extends Exports
-  > = LocalRequire<Id, TExports>;
+    TOwnId extends string,
+    TRegistry extends RegistryShape = Registry
+  > = LocalRequire<TOwnId, TRegistry>;
 
-  export const require: require<string, exports>;
-
+  export const require: require<string, Registry>;
   /**
    * You can set properties on this object for them to be exported, but you
    * can't replace the object itself. Use `module` for this.
@@ -52,8 +52,11 @@ export namespace MagicModules {
   export const module: module;
 }
 
-export interface MagicModules<Id extends string, TExports extends Exports> {
-  require: MagicModules.require<Id, TExports>;
+export interface MagicModules<
+  TOwnId extends string = string,
+  TRegistry extends RegistryShape = Registry
+> {
+  require: MagicModules.require<TOwnId, TRegistry>;
   exports: MagicModules.exports;
-  modules: MagicModules.module;
+  module: MagicModules.module;
 }

@@ -127,4 +127,5 @@ dist
 *.d.ts
 
 !magic-modules/*.d.ts
+!registry.d.ts
 !types.d.ts

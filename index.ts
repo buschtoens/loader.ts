@@ -24,3 +24,5 @@
 
 export * from './types';
 export * from './get-globals';
+
+export type { Registry } from './registry';
