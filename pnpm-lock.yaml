@@ -4,6 +4,7 @@ overrides:
   prettier: 2.5.0
 
 specifiers:
+  '@clark/prettier-config': ^2.2.0
   '@release-it/conventional-changelog': ^3.3.0
   '@typescript-eslint/eslint-plugin': ^5.5.0
   '@typescript-eslint/parser': ^5.5.0
@@ -19,6 +20,7 @@ dependencies:
   type-fest: 2.8.0
 
 devDependencies:
+  '@clark/prettier-config': 2.2.0
   '@release-it/conventional-changelog': 3.3.0_release-it@14.11.8
   '@typescript-eslint/eslint-plugin': 5.5.0_2a935f58a3cc0b0f42856ccf18d8367f
   '@typescript-eslint/parser': 5.5.0_eslint@8.3.0+typescript@4.5.2
@@ -50,6 +52,11 @@ packages:
       '@babel/helper-validator-identifier': 7.15.7
       chalk: 2.4.2
       js-tokens: 4.0.0
+    dev: true
+
+  /@clark/prettier-config/2.2.0:
+    resolution: {integrity: sha512-WjqHNxSjB2w4xh+vLkhHmUhoAkJWnDPlpPktFPXOEgKDknuSDbGHO8muKnJLRrLJPNtqAs79EzAIIX8FQFTfnQ==}
+    engines: {node: ^10.0 || ^12.0 || ^13.0 || >=14.0}
     dev: true
 
   /@eslint/eslintrc/1.0.4:

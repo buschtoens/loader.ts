@@ -45,6 +45,7 @@
     "loader.js": "^4.7.0"
   },
   "devDependencies": {
+    "@clark/prettier-config": "^2.2.0",
     "@release-it/conventional-changelog": "^3.3.0",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
