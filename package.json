@@ -45,16 +45,16 @@
     "loader.js": "^4.7.0"
   },
   "devDependencies": {
-    "@clark/prettier-config": "^2.2.0",
-    "@release-it/conventional-changelog": "^3.3.0",
-    "@typescript-eslint/eslint-plugin": "^5.5.0",
-    "@typescript-eslint/parser": "^5.5.0",
-    "eslint": "^8.3.0",
-    "eslint-config-prettier": "^8.3.0",
-    "loader.js": "^4.7.0",
-    "prettier": "^2.5.0",
-    "release-it": "^14.11.8",
-    "typescript": "~4.5.2"
+    "@clark/prettier-config": "2.2.0",
+    "@release-it/conventional-changelog": "3.3.0",
+    "@typescript-eslint/eslint-plugin": "5.62.0",
+    "@typescript-eslint/parser": "5.62.0",
+    "eslint": "8.3.0",
+    "eslint-config-prettier": "8.10.0",
+    "loader.js": "4.7.0",
+    "prettier": "2.5.0",
+    "release-it": "14.11.8",
+    "typescript": "4.5.2"
   },
   "engines": {
     "node": ">= 12.*"
