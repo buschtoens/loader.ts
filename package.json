@@ -36,7 +36,7 @@
     "lint:types": "tsc --noEmit"
   },
   "resolutions": {
-    "prettier": "2.5.0"
+    "prettier": "2.8.8"
   },
   "dependencies": {
     "type-fest": "^2.8.0"
